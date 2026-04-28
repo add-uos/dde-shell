@@ -96,6 +96,7 @@ add_subdirectory(showdesktop)
 add_subdirectory(taskmanager)
 add_subdirectory(tray)
 add_subdirectory(multitaskview)
+add_subdirectory(demoplugin)
 add_subdirectory(frame)
 
 #add_subdirectory(appruntimeitem)
