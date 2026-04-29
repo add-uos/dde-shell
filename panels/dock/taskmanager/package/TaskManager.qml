@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023-2026 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -14,15 +14,25 @@ ContainmentItem {
     id: taskmanager
     property bool useColumnLayout: Panel.rootObject.useColumnLayout
     property int dockOrder: 16
-    property real remainingSpacesForTaskManager: Panel.rootObject.dockRemainingSpaceForCenter 
+    property real remainingSpacesForTaskManager: Panel.rootObject.dockRemainingSpaceForCenter
     readonly property int appTitleSpacing: Math.max(10, Math.round(Panel.rootObject.dockItemMaxSize * 9 / 14) / 3)
 
     implicitWidth: {
-        let maxW = Panel.itemAlignment === Dock.LeftAlignment ? Math.max(remainingSpacesForTaskManager, appContainer.implicitWidth) : Math.min(remainingSpacesForTaskManager, appContainer.implicitWidth)
+        // Only expand in classic mode when TaskManager is the last item in the center section,
+        // to avoid pushing subsequent plugins (e.g. DemoPlugin) to the far right.
+        let shouldExpand = Panel.itemAlignment === Dock.LeftAlignment
+            && Panel.rootObject.dockCenterPartCount <= 2
+        let maxW = shouldExpand
+            ? Math.max(remainingSpacesForTaskManager, appContainer.implicitWidth)
+            : Math.min(remainingSpacesForTaskManager, appContainer.implicitWidth)
         return useColumnLayout ? Panel.rootObject.dockSize : maxW
     }
     implicitHeight: {
-        let maxH = Panel.itemAlignment === Dock.LeftAlignment ? Math.max(remainingSpacesForTaskManager, appContainer.implicitHeight) : Math.min(remainingSpacesForTaskManager, appContainer.implicitHeight)
+        let shouldExpand = Panel.itemAlignment === Dock.LeftAlignment
+            && Panel.rootObject.dockCenterPartCount <= 2
+        let maxH = shouldExpand
+            ? Math.max(remainingSpacesForTaskManager, appContainer.implicitHeight)
+            : Math.min(remainingSpacesForTaskManager, appContainer.implicitHeight)
         return useColumnLayout ? maxH : Panel.rootObject.dockSize
     }
     // Helper function to find the current index of an app by its appId in the visualModel
