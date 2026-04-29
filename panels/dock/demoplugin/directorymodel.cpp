@@ -10,6 +10,8 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QBuffer>
+#include <QSettings>
+#include <QLocale>
 #include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(demoDirModelLog, "org.deepin.dde.shell.dock.demoplugin.directorymodel")
@@ -40,6 +42,7 @@ QVariant DirectoryModel::data(const QModelIndex &index, int role) const
     case IconUrlRole: return entry.iconUrl;
     case IconNameRole: return entry.iconName;
     case IsDirRole:  return entry.isDir;
+    case FileTypeRole: return entry.fileType;
     }
     return {};
 }
@@ -52,6 +55,7 @@ QHash<int, QByteArray> DirectoryModel::roleNames() const
         {IconUrlRole, "iconUrl"},
         {IconNameRole, "iconName"},
         {IsDirRole,   "isDir"},
+        {FileTypeRole, "fileType"},
     };
 }
 
@@ -137,6 +141,7 @@ QVariantMap DirectoryModel::get(int index) const
         {QStringLiteral("iconUrl"),   entry.iconUrl},
         {QStringLiteral("iconName"),  entry.iconName},
         {QStringLiteral("isDir"),     entry.isDir},
+        {QStringLiteral("fileType"),  entry.fileType},
     };
 }
 
@@ -167,6 +172,7 @@ void DirectoryModel::loadDirectory()
 
         if (entry.isDir) {
             entry.iconName = QStringLiteral("folder");
+            entry.fileType = Folder;
             m_folderCount++;
         } else {
             auto mime = mimeDb.mimeTypeForFile(info);
@@ -175,6 +181,51 @@ void DirectoryModel::loadDirectory()
                 entry.iconName = mime.genericIconName();
             if (entry.iconName.isEmpty())
                 entry.iconName = QStringLiteral("text-x-generic");
+
+            // Classify file type by MIME category
+            QString mimeName = mime.name();
+            if (mimeName.startsWith(QLatin1String("image/")))
+                entry.fileType = ImageFile;
+            else if (mimeName.startsWith(QLatin1String("video/")))
+                entry.fileType = VideoFile;
+            else if (mimeName.startsWith(QLatin1String("audio/")))
+                entry.fileType = AudioFile;
+            else if (info.suffix() == QLatin1String("desktop"))
+                entry.fileType = DesktopFile;
+
+            // Detect script files by MIME type or shebang
+            if (entry.fileType == GenericFile) {
+                static const QStringList scriptMimes = {
+                    QStringLiteral("application/x-shellscript"),
+                    QStringLiteral("application/x-python"),
+                    QStringLiteral("application/x-perl"),
+                    QStringLiteral("application/x-ruby"),
+                    QStringLiteral("text/x-script.python"),
+                    QStringLiteral("text/x-script.sh"),
+                    QStringLiteral("text/x-script.perl"),
+                };
+                if (scriptMimes.contains(mimeName))
+                    entry.fileType = ScriptFile;
+            }
+
+            // Resolve the application icon and localized name from .desktop files
+            if (entry.fileType == DesktopFile) {
+                QSettings desktopFile(entry.path, QSettings::IniFormat);
+                desktopFile.beginGroup(QStringLiteral("Desktop Entry"));
+
+                QString desktopIcon = desktopFile.value(QStringLiteral("Icon")).toString();
+                if (!desktopIcon.isEmpty())
+                    entry.iconName = desktopIcon;
+
+                QString langSuffix = QLocale().name();   // e.g. "zh_CN"
+                QString localizedName = desktopFile.value(QStringLiteral("Name[%1]").arg(langSuffix)).toString();
+                if (localizedName.isEmpty())
+                    localizedName = desktopFile.value(QStringLiteral("Name")).toString();
+                if (!localizedName.isEmpty())
+                    entry.name = localizedName;
+
+                desktopFile.endGroup();
+            }
         }
 
         entry.iconUrl = iconToDataUrl(entry.iconName, 64);
@@ -187,7 +238,11 @@ void DirectoryModel::loadDirectory()
 
 QString DirectoryModel::iconToDataUrl(const QString &iconName, int size)
 {
-    QIcon icon = QIcon::fromTheme(iconName);
+    QIcon icon;
+    if (iconName.startsWith(QLatin1Char('/')))
+        icon = QIcon(iconName);
+    if (icon.isNull())
+        icon = QIcon::fromTheme(iconName);
     if (icon.isNull())
         icon = QIcon::fromTheme(QStringLiteral("text-x-generic"));
     if (icon.isNull())

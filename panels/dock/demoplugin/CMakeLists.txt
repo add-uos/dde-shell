@@ -9,8 +9,11 @@ add_library(dock-demoplugin SHARED
     directorymodel.h
 )
 
+find_package(Qt${QT_VERSION_MAJOR} ${REQUIRED_QT_VERSION} REQUIRED COMPONENTS DBus)
+
 target_link_libraries(dock-demoplugin PRIVATE
     dde-shell-frame
+    Qt${QT_VERSION_MAJOR}::DBus
 )
 
 ds_install_package(PACKAGE org.deepin.ds.dock.demoplugin TARGET dock-demoplugin)

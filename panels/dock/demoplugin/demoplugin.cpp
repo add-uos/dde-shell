@@ -11,6 +11,11 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QSettings>
+#include <QStandardPaths>
+#include <QRegularExpression>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusReply>
 
 Q_LOGGING_CATEGORY(demoPluginLog, "org.deepin.dde.shell.dock.demoplugin")
 
@@ -117,6 +122,48 @@ QStringList DemoPlugin::availableColorThemes() const
 
 void DemoPlugin::openFile(const QString &filePath)
 {
+    if (filePath.endsWith(QLatin1String(".desktop"))) {
+        QSettings desktopFile(filePath, QSettings::IniFormat);
+        desktopFile.beginGroup(QStringLiteral("Desktop Entry"));
+        QString execLine = desktopFile.value(QStringLiteral("Exec")).toString();
+        desktopFile.endGroup();
+
+        if (!execLine.isEmpty()) {
+            // Remove freedesktop field codes (%f, %F, %u, %U, etc.)
+            execLine.remove(QRegularExpression(QStringLiteral(R"(%[fFuUdDnNickvm)")));
+
+            QStringList parts = execLine.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+            if (!parts.isEmpty()) {
+                QString program = parts.takeFirst();
+
+                // Resolve to absolute path if needed
+                if (!program.startsWith(QLatin1Char('/'))) {
+                    QString resolved = QStandardPaths::findExecutable(program);
+                    if (!resolved.isEmpty())
+                        program = resolved;
+                }
+
+                QString runId = QFileInfo(filePath).completeBaseName();
+
+                QDBusMessage msg = QDBusMessage::createMethodCall(
+                    QStringLiteral("org.desktopspec.ApplicationManager1"),
+                    QStringLiteral("/org/desktopspec/ApplicationManager1"),
+                    QStringLiteral("org.desktopspec.ApplicationManager1"),
+                    QStringLiteral("executeCommand"));
+                msg << program << parts
+                    << QStringLiteral("portablebinary") << runId
+                    << QVariant::fromValue(QMap<QString, QString>()) << QString();
+
+                QDBusReply<QDBusObjectPath> reply = QDBusConnection::sessionBus().call(msg);
+                if (reply.isValid())
+                    return;
+
+                qCWarning(demoPluginLog) << "AM1 executeCommand failed:" << reply.error().message()
+                                         << "falling back to openUrl";
+            }
+        }
+    }
+
     QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
 }
 

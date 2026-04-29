@@ -24,7 +24,19 @@ public:
         IconUrlRole,
         IconNameRole,
         IsDirRole,
+        FileTypeRole,
     };
+
+    enum FileType {
+        GenericFile = 0,
+        Folder,
+        ImageFile,
+        VideoFile,
+        AudioFile,
+        ScriptFile,
+        DesktopFile,
+    };
+    Q_ENUM(FileType)
 
     explicit DirectoryModel(QObject *parent = nullptr);
 
@@ -61,6 +73,7 @@ private:
         QString iconName;
         QString iconUrl;
         bool isDir;
+        FileType fileType = GenericFile;
     };
 
     QString m_path;

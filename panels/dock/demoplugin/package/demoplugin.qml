@@ -48,7 +48,7 @@ AppletItem {
         anchors.centerIn: parent
         width: hoverSize
         height: hoverSize
-        radius: 8
+        radius: 12
         color: "transparent"
 
         Behavior on color { ColorAnimation { duration: 80 } }
@@ -239,6 +239,215 @@ AppletItem {
             }
         }
 
+        // --- Image file icon (landscape with sun) ---
+        function drawImageIcon(ctx, x, y, w, h, color1, color2) {
+            var r = Math.max(1, Math.min(w, h) * 0.08);
+            roundedRect(ctx, x, y, w, h, r, null, "rgba(255,255,255,0.2)", 0.5);
+
+            var grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            ctx.fillStyle = grad;
+            roundedRect(ctx, x, y, w, h, r, grad, "rgba(255,255,255,0.2)", 0.5);
+
+            // Mountain triangle
+            ctx.beginPath();
+            ctx.moveTo(x + w * 0.15, y + h * 0.75);
+            ctx.lineTo(x + w * 0.45, y + h * 0.35);
+            ctx.lineTo(x + w * 0.65, y + h * 0.75);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,255,255,0.25)";
+            ctx.fill();
+
+            // Second mountain
+            ctx.beginPath();
+            ctx.moveTo(x + w * 0.45, y + h * 0.75);
+            ctx.lineTo(x + w * 0.7, y + h * 0.45);
+            ctx.lineTo(x + w * 0.88, y + h * 0.75);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,255,255,0.18)";
+            ctx.fill();
+
+            // Sun
+            ctx.beginPath();
+            ctx.arc(x + w * 0.72, y + h * 0.28, w * 0.1, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            ctx.fill();
+        }
+
+        // --- Video file icon (film strip with play button) ---
+        function drawVideoIcon(ctx, x, y, w, h, color1, color2) {
+            var r = Math.max(1, Math.min(w, h) * 0.06);
+            var grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            roundedRect(ctx, x, y, w, h, r, grad, "rgba(255,255,255,0.2)", 0.5);
+
+            // Film strip holes on left
+            var holeW = w * 0.08;
+            var holeH = h * 0.12;
+            var holeX = x + w * 0.06;
+            for (var i = 0; i < 3; i++) {
+                roundedRect(ctx, holeX, y + h * 0.15 + i * h * 0.25, holeW, holeH, 1, "rgba(0,0,0,0.2)", null);
+            }
+
+            // Film strip holes on right
+            var holeX2 = x + w - w * 0.06 - holeW;
+            for (var i = 0; i < 3; i++) {
+                roundedRect(ctx, holeX2, y + h * 0.15 + i * h * 0.25, holeW, holeH, 1, "rgba(0,0,0,0.2)", null);
+            }
+
+            // Play button triangle
+            var playCx = x + w * 0.5;
+            var playCy = y + h * 0.5;
+            var playS = w * 0.2;
+            ctx.beginPath();
+            ctx.moveTo(playCx - playS * 0.4, playCy - playS * 0.6);
+            ctx.lineTo(playCx + playS * 0.6, playCy);
+            ctx.lineTo(playCx - playS * 0.4, playCy + playS * 0.6);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,255,255,0.45)";
+            ctx.fill();
+        }
+
+        // --- Audio file icon (music note) ---
+        function drawAudioIcon(ctx, x, y, w, h, color1, color2) {
+            var r = Math.max(1, Math.min(w, h) * 0.06);
+            var grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            roundedRect(ctx, x, y, w, h, r, grad, "rgba(255,255,255,0.2)", 0.5);
+
+            // Music note
+            var noteX = x + w * 0.35;
+            var noteTopY = y + h * 0.22;
+            var noteH = h * 0.4;
+            var noteW = w * 0.06;
+
+            // Stem
+            ctx.fillStyle = "rgba(255,255,255,0.45)";
+            ctx.fillRect(noteX, noteTopY, noteW, noteH);
+
+            // Note head (ellipse)
+            ctx.beginPath();
+            ctx.ellipse(noteX - w * 0.04, noteTopY + noteH, w * 0.14, h * 0.1, -0.3, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.45)";
+            ctx.fill();
+
+            // Second note
+            var note2X = x + w * 0.6;
+            ctx.fillRect(note2X, noteTopY + h * 0.05, noteW, noteH);
+            ctx.beginPath();
+            ctx.ellipse(note2X - w * 0.04, noteTopY + h * 0.05 + noteH, w * 0.14, h * 0.1, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Beam connecting stems
+            ctx.fillStyle = "rgba(255,255,255,0.45)";
+            ctx.beginPath();
+            ctx.moveTo(noteX, noteTopY);
+            ctx.lineTo(note2X, noteTopY + h * 0.05);
+            ctx.lineTo(note2X + noteW, noteTopY + h * 0.05);
+            ctx.lineTo(noteX + noteW, noteTopY);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // --- Script file icon (terminal with ">_" prompt) ---
+        function drawScriptIcon(ctx, x, y, w, h, color1, color2) {
+            var r = Math.max(1, Math.min(w, h) * 0.06);
+            var grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            roundedRect(ctx, x, y, w, h, r, grad, "rgba(255,255,255,0.2)", 0.5);
+
+            // Title bar
+            var barH = h * 0.14;
+            roundedRect(ctx, x + 1, y + 1, w - 2, barH, r, "rgba(0,0,0,0.15)", null);
+
+            // Title bar dots
+            var dotR = barH * 0.18;
+            var dotY = y + barH * 0.5;
+            for (var i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(x + w * 0.15 + i * w * 0.1, dotY, dotR, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255," + (0.5 - i * 0.1) + ")";
+                ctx.fill();
+            }
+
+            // Prompt ">_"
+            var promptY = y + barH + h * 0.12;
+            ctx.fillStyle = "rgba(255,255,255,0.5)";
+            ctx.font = "bold " + (h * 0.18) + "px monospace";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.fillText(">_", x + w * 0.12, promptY);
+
+            // Code lines
+            var lineY = promptY + h * 0.28;
+            var lineH = h * 0.05;
+            for (var i = 0; i < 2; i++) {
+                var lw = (i === 1) ? w * 0.35 : w * 0.55;
+                roundedRect(ctx, x + w * 0.12, lineY + i * h * 0.1, lw, lineH, lineH / 2, "rgba(255,255,255,0.25)", null);
+            }
+        }
+
+        // --- Desktop file icon (app launcher with rocket) ---
+        function drawDesktopIcon(ctx, x, y, w, h, color1, color2) {
+            var r = Math.max(1, Math.min(w, h) * 0.08);
+            var grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            roundedRect(ctx, x, y, w, h, r, grad, "rgba(255,255,255,0.2)", 0.5);
+
+            // Rocket body
+            var cx = x + w * 0.5;
+            var cy = y + h * 0.45;
+            var rw = w * 0.12;
+            var rh = h * 0.35;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - rh);
+            ctx.quadraticCurveTo(cx + rw, cy - rh * 0.5, cx + rw, cy);
+            ctx.lineTo(cx + rw, cy + rh * 0.3);
+            ctx.lineTo(cx - rw, cy + rh * 0.3);
+            ctx.lineTo(cx - rw, cy);
+            ctx.quadraticCurveTo(cx - rw, cy - rh * 0.5, cx, cy - rh);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,255,255,0.45)";
+            ctx.fill();
+
+            // Window
+            ctx.beginPath();
+            ctx.arc(cx, cy - rh * 0.2, rw * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.fill();
+
+            // Fins
+            ctx.beginPath();
+            ctx.moveTo(cx - rw, cy + rh * 0.1);
+            ctx.lineTo(cx - rw * 1.6, cy + rh * 0.45);
+            ctx.lineTo(cx - rw, cy + rh * 0.3);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + rw, cy + rh * 0.1);
+            ctx.lineTo(cx + rw * 1.6, cy + rh * 0.45);
+            ctx.lineTo(cx + rw, cy + rh * 0.3);
+            ctx.closePath();
+            ctx.fill();
+
+            // Flame
+            ctx.beginPath();
+            ctx.moveTo(cx - rw * 0.6, cy + rh * 0.3);
+            ctx.lineTo(cx, cy + rh * 0.7);
+            ctx.lineTo(cx + rw * 0.6, cy + rh * 0.3);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(255,200,50,0.5)";
+            ctx.fill();
+        }
+
         // --- Grid Folders mode (dynamic count from home dir) ---
         function drawGridFolders(ctx, cw, ch, count, theme) {
             var br = cw * 0.15;
@@ -352,6 +561,7 @@ AppletItem {
                     }
 
                     Button {
+                        visible: false
                         flat: true
                         implicitWidth: 32
                         implicitHeight: 28
@@ -362,6 +572,7 @@ AppletItem {
                     }
 
                     Label {
+                        visible: false
                         Layout.fillWidth: true
                         text: Applet.directoryPath
                         elide: Text.ElideMiddle
@@ -372,6 +583,7 @@ AppletItem {
 
                     Button {
                         flat: true
+                        visible: false
                         implicitWidth: 32
                         implicitHeight: 28
                         text: "↻"
@@ -381,6 +593,7 @@ AppletItem {
 
                     Button {
                         flat: true
+                        visible: false
                         implicitWidth: 32
                         implicitHeight: 28
                         text: Applet.iconViewMode === 0 ? "☰" : "⊞"
